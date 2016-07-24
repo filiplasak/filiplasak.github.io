@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>Phaser - Making your first game, part 1</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+
+
+function preload() {
+  game.load.image('red', 'assets/red.png');
+  game.load.image('logo', 'assets/logo.png');
+  game.load.image('outlook', 'assets/outlook.png')
+}
+
+var player;
+var platforms;
+var cursors;
+var score;
+var scoreText;
+var stateText;
+var restartText;
+var mainLoop;
+var background;
+
+function create() {
+
+  game.physics.startSystem(Phaser.Physics.ARCADE);
+
+  platforms = game.add.group();
+  platforms.enableBody = true;
+
+  // background = game.add.tileSprite(0,0,800,600, 'outlook');
+
+  cursors = game.input.keyboard.createCursorKeys();
+
+  scoreText = game.add.text(game.world.width-200, 16, 'Wynik: 0', { fontSize: '32px', fill: '#FFF' });
+  stateText = game.add.text(game.world.centerX, game.world.centerY,' ', { font: '84px Arial', fill: '#FFF' });
+  stateText.anchor.setTo(0.5, 0.5);
+  stateText.visible = false;
+  restartText = game.add.text(game.world.centerX, game.world.height - 100, 'Restart', { font: '84px Arial', fill: '#FFF' } );
+  restartText.visible = false;
+  restartText.inputEnabled = true;
+  restartText.events.onInputDown.add(restart, this);
+
+  start();
+}
+
+function start() {
+  score = 0;
+  mainLoop = game.time.events.loop(Phaser.Timer.SECOND, generatePlatforms, this);
+  player = game.add.sprite(64, 64, 'logo');
+  game.physics.enable(player, Phaser.Physics.ARCADE);
+  player.body.collideWorldBounds = true;
+  player.body.gravity.y = 200;
+  player.body.bounce.y = 0.2;
+  scoreText.text = 'Wynik: ' + score;
+}
+
+function update() {
+
+  game.physics.arcade.overlap(player, platforms, collisionHandler, null, this);
+  // background.tilePosition.x -= 2;
+  player.body.velocity.x = 0;
+
+  if (cursors.left.isDown)
+  {
+      player.body.velocity.x = -150;
+  }
+  else if (cursors.right.isDown)
+  {
+      player.body.velocity.x = 150;
+  }
+  else if (cursors.up.isDown)
+  {
+      player.body.velocity.y = -150;
+  }
+  else if (cursors.down.isDown)
+  {
+      player.body.velocity.y = 150;
+  }
+}
+
+function generatePlatforms() {
+  var platformHeight = game.cache.getImage('red').height;
+
+  var h = randPlatformH(game.world.height)
+  var platformTop = platforms.create(game.world.width, 0, 'red');
+  platformTop.scale.setTo(1, h/platformHeight );
+
+  h = randPlatformH(game.world.height - h)
+  var platformBottom = platforms.create(game.world.width,  game.world.height - h, 'red');
+  platformBottom.scale.setTo(1, h/platformHeight);
+
+  platformBottom.body.immovable = true;
+  platformTop.body.immovable = true;
+
+  platformTop.body.velocity.x = -250;
+  platformBottom.body.velocity.x = -250;
+
+  score += 1
+  scoreText.text = 'Wynik: ' + score;
+}
+
+function randPlatformH(h) {
+  var minH = h/3;
+  var maxH = h * 0.7
+  return game.rnd.integerInRange(minH, maxH);
+}
+
+function collisionHandler() {
+  game.time.events.remove(mainLoop);
+  player.kill();
+  stateText.text = "Hehe, wpadles\nna spotkanie";
+  stateText.visible = true;
+  restartText.visible = true;
+}
+
+function restart() {
+  stateText.visible = false;
+  restartText.visible = false;
+  platforms.destroy(true, true)
+  start();
+}
+
+</script>
+
+</body>
+</html>
